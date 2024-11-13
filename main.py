@@ -1,3 +1,9 @@
+"""
+This file comprise the main functionality of this project
+
+This project aims to create a tool calling agent with persistent memory to guide the user.
+"""
+
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.checkpoint.memory import MemorySaver
