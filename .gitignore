@@ -1,3 +1,4 @@
 venv
 .env
 xml_files
+uesp_db
