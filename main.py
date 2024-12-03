@@ -8,6 +8,8 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.prebuilt import create_react_agent
+from tools import query_database
 
 import os
 from dotenv import load_dotenv
@@ -16,35 +18,51 @@ load_dotenv
 
 OPENAI_KEY = os.getenv("OPENAI_KEY")
 
+tools = [query_database]
+
 model = ChatOpenAI(api_key=OPENAI_KEY, model="gpt-3.5-turbo")
+
+model_with_tools = model.bind_tools(tools)
 
 config = {"configurable": {"thread_id": "abc123"}}
 
+memory = MemorySaver()
 
-def call_model(state: MessagesState):
-    response = model.invoke(state["messages"])
-    return {"messages": response}
+agent_executor = create_react_agent(model, tools, checkpointer=memory)
+
+def call_agent(query):
+    response = agent_executor.invoke({"messages": [HumanMessage(content=query)]}, config)
+    return response["messages"]
+
+# def call_model(state: MessagesState):
+#     response = model_with_tools.invoke(state["messages"])
+#     if response.content:
+#         return {"messages": response}
+#     elif response.tool_calls:
+#         agent_response = call_agent(response.tool_calls)
+#     else:
+#         return{"message": "There is something wrong with my AI"}
 
 
-def initate_workflow():
+# def initate_workflow():
 
-    workflow = StateGraph(state_schema=MessagesState)
-    workflow.add_edge(START, "model")
-    workflow.add_node("model", call_model)
+#     workflow = StateGraph(state_schema=MessagesState)
+#     workflow.add_edge(START, "model")
+#     workflow.add_node("model", call_model)
 
-    memory = MemorySaver()
-    app = workflow.compile(checkpointer=memory)
+#     memory = MemorySaver()
+#     app = workflow.compile(checkpointer=memory)
 
-    return app
+#     return app
 
 
 if __name__ == "__main__":
-    app = initate_workflow()
+    # app = initate_workflow()
     print("Welcome to this AI chatbot!\nTo begin chatting write in the line below and press enter.\n")
+
     while True:
         query = input()
         if query == "quit":
             break
-        input_messages = [HumanMessage(query)]
-        response = app.invoke({"messages": input_messages}, config)
-        response["messages"][-1].pretty_print()
+        response = call_agent(query)
+        print(response)
