@@ -30,8 +30,10 @@ memory = MemorySaver()
 
 agent_executor = create_react_agent(model, tools, checkpointer=memory)
 
+
 def call_agent(query):
-    response = agent_executor.invoke({"messages": [HumanMessage(content=query)]}, config)
+    response = agent_executor.invoke(
+        {"messages": [HumanMessage(content=query)]}, config)
     return response["messages"]
 
 # def call_model(state: MessagesState):
@@ -55,14 +57,20 @@ def call_agent(query):
 
 #     return app
 
+def ui_query(message):
+    response = call_agent(message)
+    return response
 
-if __name__ == "__main__":
-    # app = initate_workflow()
-    print("Welcome to this AI chatbot!\nTo begin chatting write in the line below and press enter.\n")
 
+def run():
     while True:
         query = input()
         if query == "quit":
             break
         response = call_agent(query)
         print(response)
+
+
+if __name__ == "__main__":
+    # app = initate_workflow()
+    run()
